@@ -28,4 +28,5 @@ export const CAT_COLORS: Record<Category, { bg: string; fg: string }> = {
   중식: { bg: '#F6E3E1', fg: '#A93226' },
   일식: { bg: '#E3EAF5', fg: '#2B5FA8' },
   양식: { bg: '#EFE7F3', fg: '#6D3F86' },
+  아시안: { bg: '#FFF3C4', fg: '#7A5A00' },
 };

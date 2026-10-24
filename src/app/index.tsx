@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PlaceItem } from '@/components/place-item';
 import { PrimaryButton, Screen, Sub, Title, styles as ui } from '@/components/ui';
-import { PLACES } from '@/data/places';
+import { bestMenu, cheapestPrice, PLACES } from '@/data/places';
 import { useEat } from '@/hooks/use-eat';
 import { formatDate, won } from '@/lib/budget';
 import { useBudget } from '@/store/budget-store';
@@ -15,16 +15,18 @@ export default function HomeScreen() {
   const { pick, pickRandom } = useEat();
   const status = STATUS[s.status];
 
-  // 예산 안에서 가장 비싼 곳부터 3개 (예산을 알차게 쓰는 순서)
-  const fits = PLACES.filter((p) => p.price <= s.perMeal).sort((a, b) => b.price - a.price);
-  const top = (fits.length ? fits : [...PLACES].sort((a, b) => a.price - b.price)).slice(0, 3);
+  // 예산 안 메뉴가 있는 가까운 식당 중에서, 오늘 날짜로 매일 다르게 3곳을 고른다
+  const fits = PLACES.filter((p) => bestMenu(p, s.perMeal).fits && p.walk <= 5);
+  const pool = fits.length ? fits : [...PLACES].sort((a, b) => cheapestPrice(a) - cheapestPrice(b)).slice(0, 3);
+  const seed = new Date().getDate();
+  const top = pool.length <= 3 ? pool : [0, 1, 2].map((i) => pool[(seed * 7 + i * Math.ceil(pool.length / 3)) % pool.length]);
   const usedPct = settings.amount > 0 ? Math.min(100, Math.max(0, (s.spent / settings.amount) * 100)) : 0;
 
   return (
     <Screen>
       <View>
         <Sub>{formatDate(new Date())}</Sub>
-        <Title>[학교명] 정문 근처</Title>
+        <Title>인하대 근처</Title>
       </View>
 
       {s.ended && (
@@ -78,7 +80,7 @@ export default function HomeScreen() {
       </View>
       <View style={{ gap: 10 }}>
         {top.map((p) => (
-          <PlaceItem key={p.id} place={p} perMeal={s.perMeal} onPress={() => pick(p)} />
+          <PlaceItem key={p.id} place={p} perMeal={s.perMeal} onPick={(m) => pick(p, m)} />
         ))}
       </View>
 

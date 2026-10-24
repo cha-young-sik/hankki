@@ -3,7 +3,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 
-import type { Place } from '@/data/places';
+import type { Menu, Place } from '@/data/places';
 import { calcBudget, DEFAULT_AMOUNT, toDateKey, type BudgetSummary, type Meal, type Settings } from '@/lib/budget';
 
 const STORAGE_KEY = 'hankki/v1';
@@ -71,7 +71,7 @@ interface BudgetContextValue {
   summary: BudgetSummary;
   lastDelta: Delta | null;
   /** 식당 메뉴를 먹은 것으로 기록하고, 예산 변화를 돌려준다 */
-  eat: (place: Place) => Delta | null;
+  eat: (place: Place, menu: Menu) => Delta | null;
   undo: () => Meal | null;
   clearPeriod: () => void;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -113,20 +113,20 @@ export function BudgetProvider({ children }: { children: React.ReactNode }) {
     meals: state.meals,
     summary,
     lastDelta: state.lastDelta,
-    eat: (place) => {
+    eat: (place, menu) => {
       if (summary.ended) return null;
       const now = new Date();
       const meal: Meal = {
         id: newId(),
         placeId: place.id,
         name: place.name,
-        menu: place.menu,
-        price: place.price,
+        menu: menu.name,
+        price: menu.price,
         date: toDateKey(now),
         at: now.getTime(),
       };
       const after = calcBudget(state.settings, [...state.meals, meal], now);
-      const delta: Delta = { name: place.name, price: place.price, before: summary.perMeal, after: after.perMeal };
+      const delta: Delta = { name: place.name, price: menu.price, before: summary.perMeal, after: after.perMeal };
       dispatch({ type: 'addMeal', meal, delta });
       return delta;
     },
